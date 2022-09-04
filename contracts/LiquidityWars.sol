@@ -5,9 +5,9 @@ import "../interfaces/KeeperCompatibleInterface.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-/** @title Game built on curve pools
+/** @title Game built with usage of curve pools as a core of reward system.
  *  @author Kamil Palenik
- *  @notice
+ *  @notice The purpose is to attract more liquidity to curve finance.
  *  @dev
  */
 contract LiquidityWars is KeeperCompatibleInterface, Ownable {
@@ -15,7 +15,7 @@ contract LiquidityWars is KeeperCompatibleInterface, Ownable {
     enum GameState {
         OPEN, // open to entry
         PROCESSING, // game is processing
-        INACTIVE // there is no game active or open o entry
+        INACTIVE // there is no game active or open entry
     }
     enum Nation {
         ORKS,
@@ -39,9 +39,9 @@ contract LiquidityWars is KeeperCompatibleInterface, Ownable {
     mapping(Nation => NationParams) public s_nationToLP;
     GameState private s_gameState = GameState.OPEN;
     uint256 private s_gameInterval = 1 minutes;
-    uint256 public s_lastTimestamp;
-    address[] public s_players;
-    mapping(address => PlayerParams) public s_playerToParams;
+    uint256 private s_lastTimestamp;
+    address[] private s_players;
+    mapping(address => PlayerParams) private s_playerToParams;
 
     /* Events */
     event GameEnter(address indexed player);
@@ -71,13 +71,28 @@ contract LiquidityWars is KeeperCompatibleInterface, Ownable {
             "Wrong nation selected"
         );
         require(s_gameState == GameState.OPEN, "Game not open to enter");
+        require(!checkIfPlayerEntered(msg.sender), "Player already entered");
+        //temporary
+        require(
+            s_nationToLP[Nation(_nation)].entryAmount <= msg.value,
+            "Not enough amount of tokens sent"
+        );
         // IERC20(nationToLP[Nation(nation)])
         // if(msg.value < i_)
         s_players.push(msg.sender);
         s_playerToParams[msg.sender].nation = Nation(_nation);
     }
 
-    function claimResources() public {}
+    function claimResources() public payable {
+        require(
+            getPlayerToResources(msg.sender) > 0,
+            "You did not participated"
+        );
+        require(s_gameState == GameState.OPEN, "Game state is not OPEN");
+        payable(msg.sender).transfer(
+            s_nationToLP[s_playerToParams[msg.sender].nation].entryAmount
+        );
+    }
 
     function startGame() public onlyOwner {
         require(s_gameState == GameState.OPEN, "Game not open to start");
@@ -85,12 +100,31 @@ contract LiquidityWars is KeeperCompatibleInterface, Ownable {
         s_lastTimestamp = block.timestamp;
     }
 
-    function endGame() public {
+    function endGame() public payable {
+        uint256 idx;
+        address[] memory players = s_players;
         require(
             s_gameState == GameState.PROCESSING,
             "Game not in processing state to finish it"
         );
-        s_gameState = GameState.OPEN;
+
+        // for (idx = 0; idx < players.length; idx++) {
+        //     payable(players[idx]).transfer(
+        //         s_nationToLP[s_playerToParams[players[idx]].nation].entryAmount
+        //     );
+        // }
+        s_gameState = GameState.OPEN; //Move up!
+    }
+
+    function checkIfPlayerEntered(address player) public view returns (bool) {
+        uint256 idx;
+        address[] memory players = s_players;
+        for (idx = 0; idx < players.length; idx++) {
+            if (players[idx] == player) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -143,5 +177,25 @@ contract LiquidityWars is KeeperCompatibleInterface, Ownable {
 
     function getLastTimestamp() public view returns (uint256) {
         return s_lastTimestamp;
+    }
+
+    function getPlayerToResources(address player)
+        public
+        view
+        returns (uint256)
+    {
+        return s_playerToParams[player].resources;
+    }
+
+    function getAllPlayers() public view returns (address[] memory) {
+        return s_players;
+    }
+
+    function getIfTimePassed() public view returns (bool) {
+        return ((block.timestamp - s_lastTimestamp) > s_gameInterval);
+    }
+
+    function getBlockTimestamp() public view returns (uint256) {
+        return block.timestamp;
     }
 }

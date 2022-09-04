@@ -1,6 +1,6 @@
 ## TODO
-- [ ] Keeper to distribute RESOURCES (not transferable, ERC20 ?)
-- [ ] Accept only cetrain Curve LP tokens (three tokens represents three nations (Orks, Elves, Dwarfs, Humans))
+- [ ] Keeper to distribute RESOURCES (not transferable, ERC20 ?)(Later can be adjusted for different time zones)
+- [ ] Accept only cetrain Curve LP tokens (four tokens represents four nations (Orks, Elves, Dwarfs, Humans))
 - [ ] Deposit LP tokens to gauge
 - [ ] Keeper to finish game - distribution curve among participants depending on their RESOURCES. Curve will be distributed according following formula: User's RESOURCES / Total supply of RESOURCES. All deposited LPs will come back to the user.
 - [ ] Building structure and objects functionalities (Farm, Barracks, Hideaway, Defense)

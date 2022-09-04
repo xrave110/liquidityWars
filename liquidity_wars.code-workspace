@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../../../.brownie/packages"
+		},
+		{
+			"path": "../../../smart_contracts_hardhat/hardhat-smartcontract-lottery-fcc"
+		}
+	],
+	"settings": {}
+}
